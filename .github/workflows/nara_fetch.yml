@@ -3,7 +3,7 @@ name: 나라장터 기술용역 사전규격 수집
 on:
   schedule:
     # 매일 KST 00:00 = UTC 15:00 (전일)
-    - cron: "0 15 * * *"
+    - cron: "0 21 * * *"
 
   # 수동 실행 버튼 (테스트용)
   workflow_dispatch:
