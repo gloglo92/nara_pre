@@ -1,6 +1,7 @@
 """
-나라장터 사전규격공개 (기술용역) 데이터 수집 및 정렬 스크립트 v3
-- 엔드포인트: getPublicPrcureThngInfoServcPPSSrch (사전규격 용역 검색)
+나라장터 사전규격공개 (기술용역) 데이터 수집 및 정렬 스크립트 v4
+- 엔드포인트: /ao/HrcspSsstndrdInfoService/getPublicPrcureThngInfoServc
+- 공식 참고문서(조달청_OpenAPI참고자료) 기준으로 작성
 - 매일 전일 데이터를 수집하여 Excel로 저장 후 텔레그램 발송
 """
 
@@ -24,25 +25,27 @@ TELEGRAM_TOKEN   = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # ── 상수 ──────────────────────────────────────────────────────
+# ★ 공식 문서 확인된 정확한 엔드포인트
 BASE_URL  = (
-    "http://apis.data.go.kr/1230000/PublicPrcureThngInfoService"
-    "/getPublicPrcureThngInfoServcPPSSrch"
+    "http://apis.data.go.kr/1230000/ao/HrcspSsstndrdInfoService"
+    "/getPublicPrcureThngInfoServc"
 )
 PAGE_SIZE = 999
 
-# 응답 필드 → 한글 컬럼 매핑 (API 명세 기준)
+# 응답 필드 → 한글 컬럼 매핑 (공식 문서 응답 필드 기준)
 COLUMN_MAP = {
-    "bidNtceNoList":   "공고번호",
-    "bsnsDivNm":       "사업구분",
-    "prdctClsfcNoNm":  "품명",
+    "bfSpecRgstNo":    "사전규격등록번호",
+    "prdctClsfcNoNm":  "사업명(품명)",
     "orderInsttNm":    "발주기관",
-    "rl0minsttNm":     "수요기관",
+    "rlDminsttNm":     "수요기관",
     "asignBdgtAmt":    "배정예산액(원)",
-    "rcptDt":          "의견접수마감일",
+    "rcptDt":          "등록일시",
     "opninRgstClseDt": "의견등록마감일",
-    "swBizObjYn":      "SW사업여부",
-    "refNo":           "참조번호",
     "dlvrTmlmtDt":     "납품기한",
+    "swBizObjYn":      "SW사업여부",
+    "bidNtceNoList":   "공고번호",
+    "refNo":           "참조번호",
+    "specDocFileUrl1": "규격서URL",
 }
 
 
@@ -69,11 +72,11 @@ def fetch_all_pages(start_dt: str, end_dt: str) -> list[dict]:
         # URL 직접 조합 (인증키 이중인코딩 방지)
         url = (
             f"{BASE_URL}"
-            f"?serviceKey={API_KEY}"
+            f"?ServiceKey={API_KEY}"   # ★ 공식문서 기준 대문자 S
             f"&pageNo={page}"
             f"&numOfRows={PAGE_SIZE}"
             f"&type=json"
-            f"&inqryDiv=1"           # 조회구분: 1=등록일시 기준
+            f"&inqryDiv=1"             # 1=등록일시 기준 조회
             f"&inqryBgnDt={start_dt}"
             f"&inqryEndDt={end_dt}"
         )
@@ -132,7 +135,6 @@ def build_dataframe(items: list[dict]) -> pd.DataFrame:
 
     df = pd.DataFrame(items)
 
-    # 없는 컬럼은 빈값으로 채움
     for col in COLUMN_MAP:
         if col not in df.columns:
             df[col] = ""
@@ -163,7 +165,6 @@ def save_excel(df: pd.DataFrame, date_str: str) -> str:
         )
         ws = writer.sheets["기술용역_사전규격"]
 
-        # 컬럼 너비 자동 조정
         for col_cells in ws.columns:
             max_len = max(
                 (len(str(c.value)) if c.value else 0) for c in col_cells
@@ -172,7 +173,6 @@ def save_excel(df: pd.DataFrame, date_str: str) -> str:
                 max_len + 4, 60
             )
 
-        # 헤더 스타일
         from openpyxl.styles import PatternFill, Font, Alignment
         fill = PatternFill("solid", fgColor="1F4E79")
         font = Font(color="FFFFFF", bold=True)
