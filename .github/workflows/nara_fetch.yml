@@ -1,0 +1,56 @@
+name: 나라장터 기술용역 사전규격 수집
+
+on:
+  schedule:
+    # 매일 KST 00:00 = UTC 15:00 (전일)
+    - cron: "0 15 * * *"
+
+  # 수동 실행 버튼 (테스트용)
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: "특정 날짜 수집 (빈칸 = 전일 자동). 형식: YYYYMMDD"
+        required: false
+        default: ""
+
+jobs:
+  fetch-and-notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. 코드 체크아웃 ────────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python 환경 설정 ─────────────────────────────────
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── 3. 의존성 설치 ──────────────────────────────────────
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests pandas openpyxl
+
+      # ── 4. 스크립트 실행 ────────────────────────────────────
+      - name: 🚀 Run fetch script
+        env:
+          NARA_API_KEY:        ${{ secrets.NARA_API_KEY }}
+          TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_DATE:         ${{ github.event.inputs.target_date }}
+        run: |
+          python scripts/fetch_narajangteo.py
+
+      # ── 5. 실패 시 텔레그램 에러 알림 ──────────────────────
+      - name: 🔴 Notify on failure
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="❌ 나라장터 수집 실패! GitHub Actions 로그를 확인해주세요." \
+            -d parse_mode="Markdown"
