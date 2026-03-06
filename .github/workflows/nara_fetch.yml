@@ -1,8 +1,8 @@
-name: 나라장터 기술용역 사전규격 수집
+name: 나라장터 기술용역 수집 (사전규격 + 발주계획)
 
 on:
   schedule:
-    # 매일 KST 00:00 = UTC 15:00 (전일)
+    # 매일 KST 06:00 = UTC 21:00 (전일)
     - cron: "0 21 * * *"
 
   # 수동 실행 버튼 (테스트용)
@@ -36,8 +36,8 @@ jobs:
           pip install --upgrade pip
           pip install requests pandas openpyxl
 
-      # ── 4. 스크립트 실행 ────────────────────────────────────
-      - name: 🚀 Run fetch script
+      # ── 4. 사전규격 수집 ────────────────────────────────────
+      - name: 📋 Run 사전규격 fetch
         env:
           NARA_API_KEY:        ${{ secrets.NARA_API_KEY }}
           TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -46,7 +46,17 @@ jobs:
         run: |
           python scripts/fetch_narajangteo.py
 
-      # ── 5. 실패 시 텔레그램 에러 알림 ──────────────────────
+      # ── 5. 발주계획 수집 ────────────────────────────────────
+      - name: 📌 Run 발주계획 fetch
+        env:
+          NARA_API_KEY:        ${{ secrets.NARA_API_KEY }}
+          TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_DATE:         ${{ github.event.inputs.target_date }}
+        run: |
+          python scripts/fetch_orderplan.py
+
+      # ── 6. 실패 시 텔레그램 에러 알림 ──────────────────────
       - name: 🔴 Notify on failure
         if: failure()
         run: |
