@@ -33,19 +33,24 @@ PAGE_SIZE = 999
 # ★ 사업명 키워드 필터
 KEYWORDS = ["타당성", "기본계획", "설계", "건설사업관리"]
 
-# 응답 필드 → 한글 컬럼 매핑
+# 응답 필드 → 한글 컬럼 매핑 (공식 문서 응답 필드 기준)
 COLUMN_MAP = {
-    "bizNm":           "사업명",
-    "orderInsttNm":    "발주기관",
-    "dminsttNm":       "수요기관",
-    "orderDtlAmt":     "발주도급금액(원)",
-    "orderBgnYm":      "발주시작년월",
-    "orderEndYm":      "발주종료년월",
-    "prcrmntMethd":    "조달방식",
-    "cnsttyDivNm":     "공종구분",
-    "bsnsTyNm":        "업무유형",
-    "insttLctNm":      "기관소재지",
-    "rgstDt":          "게시일시",
+    "bizNm":          "사업명",
+    "orderInsttNm":   "발주기관",
+    "totlmngInsttNm": "총괄기관",
+    "jrsdctnDivNm":   "소관구분",
+    "sumOrderAmt":    "합계발주금액(원)",      # ★ orderContrctAmt 아님
+    "orderYear":      "발주년도",
+    "orderMnth":      "발주월",
+    "cnsttyDivNm":    "공종구분",
+    "cntrctMthdNm":   "계약방법",
+    "prcrmntMethd":   "조달방식",
+    "bsnsTyNm":       "업무유형",
+    "nticeDt":        "게시일시",              # ★ rgstDt 아님
+    "deptNm":         "담당부서",
+    "ofclNm":         "담당자",
+    "telNo":          "전화번호",
+    "bidNtceNoList":  "공고번호",
 }
 
 
@@ -154,13 +159,13 @@ def build_dataframe(items: list[dict]) -> pd.DataFrame:
     df = df[list(COLUMN_MAP.keys())].rename(columns=COLUMN_MAP)
 
     # 금액 숫자 변환 → 정렬 → 천단위 콤마
-    df["발주도급금액(원)"] = (
-        pd.to_numeric(df["발주도급금액(원)"], errors="coerce")
+    df["합계발주금액(원)"] = (
+        pd.to_numeric(df["합계발주금액(원)"], errors="coerce")
         .fillna(0).astype(int)
     )
-    df = df.sort_values("발주도급금액(원)", ascending=False).reset_index(drop=True)
+    df = df.sort_values("합계발주금액(원)", ascending=False).reset_index(drop=True)
     df.index += 1
-    df["발주도급금액(원)"] = df["발주도급금액(원)"].apply(lambda x: f"{x:,}")
+    df["합계발주금액(원)"] = df["합계발주금액(원)"].apply(lambda x: f"{x:,}")
 
     return df
 
@@ -216,7 +221,7 @@ def send_telegram_file(filepath: str, date_str: str, count: int):
         f"📅 기준일: {y}-{m}-{d}\n"
         f"📊 수집건수: *{count}건*\n"
         f"🔍 필터: {', '.join(KEYWORDS)}\n"
-        f"🔽 발주도급금액 높은 순 정렬"
+        f"🔽 합계발주금액 높은 순 정렬"
     )
     send_telegram_message(msg)
 
