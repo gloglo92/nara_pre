@@ -32,6 +32,9 @@ BASE_URL  = (
 )
 PAGE_SIZE = 999
 
+# ★ 사업명 키워드 필터 (이 단어 중 하나라도 포함된 건만 추출)
+KEYWORDS = ["타당성", "기본계획", "설계", "건설사업관리"]
+
 # 응답 필드 → 한글 컬럼 매핑 (공식 문서 응답 필드 기준)
 COLUMN_MAP = {
     "bfSpecRgstNo":    "사전규격등록번호",
@@ -128,6 +131,21 @@ def fetch_all_pages(start_dt: str, end_dt: str) -> list[dict]:
     return all_items
 
 
+def filter_by_keywords(df: pd.DataFrame) -> pd.DataFrame:
+    """사업명에 키워드가 포함된 행만 필터링"""
+    if df.empty:
+        return df
+    pattern = "|".join(KEYWORDS)
+    mask = df["사업명(품명)"].str.contains(pattern, na=False)
+    filtered = df[mask].reset_index(drop=True)
+    filtered.index += 1
+    logger.info(
+        f"키워드 필터링 ({', '.join(KEYWORDS)}): "
+        f"{len(df)}건 → {len(filtered)}건"
+    )
+    return filtered
+
+
 def build_dataframe(items: list[dict]) -> pd.DataFrame:
     """DataFrame 변환 및 예산액 내림차순 정렬"""
     if not items:
@@ -203,6 +221,7 @@ def send_telegram_file(filepath: str, date_str: str, count: int):
         f"📋 *나라장터 기술용역 사전규격공개*\n"
         f"📅 기준일: {y}-{m}-{d}\n"
         f"📊 수집건수: *{count}건*\n"
+        f"🔍 필터: {', '.join(KEYWORDS)}\n"
         f"🔽 배정예산액 높은 순 정렬"
     )
     send_telegram_message(msg)
@@ -238,7 +257,21 @@ def main():
         return
 
     df = build_dataframe(items)
+    logger.info(f"정렬 후 전체: {len(df)}건")
+
+    # ★ 키워드 필터링
+    df = filter_by_keywords(df)
     logger.info(f"최종 데이터: {len(df)}건")
+
+    if df.empty:
+        y, m, d = date_str[:4], date_str[4:6], date_str[6:]
+        send_telegram_message(
+            f"📋 *나라장터 기술용역 사전규격공개*\n"
+            f"📅 기준일: {y}-{m}-{d}\n"
+            f"ℹ️ 키워드 해당 데이터가 없습니다.\n"
+            f"🔍 검색어: {', '.join(KEYWORDS)}"
+        )
+        return
 
     filepath = save_excel(df, date_str)
     send_telegram_file(filepath, date_str, len(df))
