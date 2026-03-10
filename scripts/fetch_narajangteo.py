@@ -54,7 +54,9 @@ def get_target_date_range() -> tuple[str, str, str]:
     if target and len(target) == 8:
         base = datetime.strptime(target, "%Y%m%d")
     else:
-        base = datetime.now() - timedelta(days=1)
+        from datetime import timezone
+        KST = timezone(timedelta(hours=9))
+        base = datetime.now(KST).replace(tzinfo=None) - timedelta(days=1)
 
     start    = base.strftime("%Y%m%d") + "0000"
     end      = base.strftime("%Y%m%d") + "2359"
