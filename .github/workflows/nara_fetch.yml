@@ -44,7 +44,7 @@ jobs:
           TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_DATE:         ${{ github.event.inputs.target_date }}
         run: |
-          python scripts/fetch_narajangteo.py
+          python scripts/fetch_narajangteo_company.py
 
       # ── 5. 발주계획 수집 ────────────────────────────────────
       - name: 📌 Run 발주계획 fetch
@@ -54,7 +54,7 @@ jobs:
           TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_DATE:         ${{ github.event.inputs.target_date }}
         run: |
-          python scripts/fetch_orderplan.py
+          python scripts/fetch_orderplan_company.py
 
       # ── 6. 실패 시 텔레그램 에러 알림 ──────────────────────
       - name: 🔴 Notify on failure
