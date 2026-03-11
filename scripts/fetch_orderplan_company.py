@@ -80,6 +80,11 @@ def fetch_all_pages(start_dt: str, end_dt: str) -> list[dict]:
     all_items = []
     page = 1
 
+    # 발주월 범위: 당해연도 전체(1~12월) → 발주월 필터가 게시일 수집을 막지 않도록
+    year = start_dt[:4]
+    order_bgn_ym = f"{year}01"
+    order_end_ym = f"{year}12"
+
     while True:
         url = (
             f"{BASE_URL}"
@@ -89,6 +94,8 @@ def fetch_all_pages(start_dt: str, end_dt: str) -> list[dict]:
             f"&type=json"
             f"&inqryBgnDt={start_dt}"
             f"&inqryEndDt={end_dt}"
+            f"&orderBgnYm={order_bgn_ym}"
+            f"&orderEndYm={order_end_ym}"
         )
 
         try:
