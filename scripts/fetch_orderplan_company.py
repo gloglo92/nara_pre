@@ -210,7 +210,7 @@ def build_dataframe(items: list[dict]) -> pd.DataFrame:
 
 
 def save_excel(df: pd.DataFrame, date_str: str) -> str:
-    filename = f"나라장터_기술용역_발주계획_{date_str}.xlsx"
+    filename = f"나라장터(회사용)_기술용역_발주계획_{date_str}.xlsx"
     filepath = f"/tmp/{filename}"
 
     with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
@@ -262,7 +262,7 @@ def send_telegram_file(filepath: str, date_str: str, df: pd.DataFrame):
     )
 
     msg = (
-        f"📌 *나라장터 기술용역 발주계획*\n"
+        f"📌 *나라장터 기술용역 발주계획 (회사용)*\n"
         f"📅 기준일: {y}-{m}-{d}\n"
         f"📊 총 수집건수: *{len(df)}건*\n"
         f"\n{kw_summary}\n"
@@ -294,7 +294,7 @@ def main():
     if not items:
         y, m, d = date_str[:4], date_str[4:6], date_str[6:]
         send_telegram_message(
-            f"📌 *나라장터 기술용역 발주계획*\n"
+            f"📌 *나라장터 기술용역 발주계획 (회사용)*\n"
             f"📅 기준일: {y}-{m}-{d}\n"
             f"ℹ️ 해당일 등록 데이터가 없습니다."
         )
@@ -305,7 +305,7 @@ def main():
     if df.empty:
         y, m, d = date_str[:4], date_str[4:6], date_str[6:]
         send_telegram_message(
-            f"📌 *나라장터 기술용역 발주계획*\n"
+            f"📌 *나라장터 기술용역 발주계획 (회사용)*\n"
             f"📅 기준일: {y}-{m}-{d}\n"
             f"ℹ️ 키워드 해당 데이터가 없습니다.\n"
             f"🔍 검색어: {', '.join(KEYWORDS)}"
