@@ -33,6 +33,14 @@ PAGE_SIZE = 999
 # ★ 키워드 순서 중요 (앞 키워드 우선 배치, 중복 시 첫 번째 그룹에만 포함)
 KEYWORDS = ["타당성", "기본구상", "기본계획", "설계", "건설사업관리"]
 
+# ★ 키워드 별칭: 본 키워드 미매칭 시 해당 그룹으로 분류할 추가 단어
+KEYWORD_ALIASES = {
+    "기본계획": [
+        "관리계획", "재정비", "지구단위계획", "개발계획",
+        "지구지정", "구역지정", "환지처분", "도시계획",
+    ],
+}
+
 COLUMN_MAP = {
     "bizNm":          "사업명",
     "orderInsttNm":   "발주기관",
@@ -130,10 +138,17 @@ def fetch_all_pages(start_dt: str, end_dt: str) -> list[dict]:
 
 
 def assign_keyword_group(name: str) -> str:
-    """사업명에서 첫 번째 매칭 키워드 반환"""
+    """사업명에서 첫 번째 매칭 키워드 반환
+    1단계: KEYWORDS 본 키워드 순서대로 매칭
+    2단계: KEYWORD_ALIASES 별칭으로 매칭 (본 키워드 미매칭 시에만)
+    """
     for kw in KEYWORDS:
         if kw in name:
             return kw
+    for group, aliases in KEYWORD_ALIASES.items():
+        for alias in aliases:
+            if alias in name:
+                return group
     return ""
 
 
