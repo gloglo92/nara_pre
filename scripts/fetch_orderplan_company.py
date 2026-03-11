@@ -38,6 +38,7 @@ KEYWORD_ALIASES = {
     "기본계획": [
         "관리계획", "재정비", "지구단위계획", "개발계획",
         "지구지정", "구역지정", "환지처분", "도시계획",
+        "조성계획", "마스터플랜",
     ],
 }
 
@@ -178,20 +179,12 @@ def build_dataframe(items: list[dict]) -> pd.DataFrame:
         .fillna(0).astype(int)
     )
 
-    # ★ 키워드 태깅
+    # ★ 키워드 태깅 및 필터링
     df["검색키워드"] = df["사업명"].apply(assign_keyword_group)
-
-    # ★ 키워드 없는 행 제거
     df = df[df["검색키워드"] != ""].copy()
 
-    # ★ 중복 공고 제거: 동일 공고번호 중 첫 번째 키워드 그룹만 유지
-    kw_order = {kw: i for i, kw in enumerate(KEYWORDS)}
-    df["_kw_order"] = df["검색키워드"].map(kw_order)
-    df = df.sort_values(["공고번호", "_kw_order"])
-    df = df.drop_duplicates(subset="공고번호", keep="first")
-    df = df.drop(columns=["_kw_order"])
-
     # ★ 그룹 순서 → 금액 내림차순 정렬
+    kw_order = {kw: i for i, kw in enumerate(KEYWORDS)}
     df["_group_order"] = df["검색키워드"].map(kw_order)
     df = df.sort_values(
         ["_group_order", "합계발주금액(원)"],
